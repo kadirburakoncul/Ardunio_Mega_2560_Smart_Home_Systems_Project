@@ -1,0 +1,120 @@
+#include <Keypad.h>
+#include <LiquidCrystal.h>
+LiquidCrystal lcd(22, 23, 24, 25, 26, 27);
+
+const byte Tus_Takimi_Satir_Sayisi = 4;
+const byte Tus_Takimi_Sutun_Sayisi = 3;
+char Tus_Takimi[Tus_Takimi_Satir_Sayisi][Tus_Takimi_Sutun_Sayisi] = {
+  {'1', '2', '3'},
+  {'4', '5', '6'},
+  {'7', '8', '9'},
+  {'*', '0', '#'}
+};
+byte Tus_Takimi_Satir_Pinleri[Tus_Takimi_Satir_Sayisi] = {49, 50, 51, 52};
+byte Tus_Takimi_Sutun_Pinleri[Tus_Takimi_Sutun_Sayisi] = {44, 45, 46};
+Keypad Sifre_Kutusu = Keypad( makeKeymap(Tus_Takimi), Tus_Takimi_Satir_Pinleri, Tus_Takimi_Sutun_Pinleri, Tus_Takimi_Satir_Sayisi, Tus_Takimi_Sutun_Sayisi);
+int Yesil_Led = 47;
+int Kirmizi_Led = 48;
+char Gercek_Sifre[4] = {'1', '2', '3', '4'};
+char Girilen_Sifre[4];
+char Basilan_Tus;
+int Sifrenin_Kacinci_Elemani = 0;
+//////////////////////////////////////////
+const int Isi_Olcer_lm35 = A1;
+float Voltaj_Degeri = 0;
+float Bulunan_Sicaklik = 0;
+int lm35_Gelen_Veri = 0;
+float Yazilan_Sicaklik = 0;
+//////////////////////////////////////////
+int Hareket_Sensoru = 28;
+boolean Hareket_Sensoru_Kontrol = 0;
+int Lamba_Tetigi = 29;
+//////////////////////////////////////////
+int Yangin_Sensoru = A2;
+int Buzzer = 53;
+int Yangin_Sensoru_Kontrol = 0;
+//////////////////////////////////////////
+
+void setup() {
+  pinMode(Isi_Olcer_lm35, INPUT);
+  lcd.begin(16, 2);
+  pinMode(Yesil_Led, OUTPUT);
+  pinMode(Kirmizi_Led, OUTPUT);
+  pinMode(Hareket_Sensoru, INPUT);
+  pinMode(Lamba_Tetigi, OUTPUT);
+  pinMode(Yangin_Sensoru, INPUT_PULLUP);
+  pinMode(Buzzer, OUTPUT);
+}
+
+
+
+
+
+void loop() {
+
+  char Basilan_Tus = Sifre_Kutusu.getKey();
+
+  if (Basilan_Tus)
+  {
+    Girilen_Sifre[Sifrenin_Kacinci_Elemani++] = Basilan_Tus;
+  }
+  if (Sifrenin_Kacinci_Elemani == 4)
+  {
+    if ((strncmp(Girilen_Sifre , Gercek_Sifre , 4) == 0 ))
+    {
+      digitalWrite(Yesil_Led, HIGH);
+      delay(500);
+      digitalWrite(Yesil_Led, LOW);
+      Sifrenin_Kacinci_Elemani = 0;
+    }
+    else
+    {
+      digitalWrite(Kirmizi_Led, HIGH);
+      delay(500);
+      digitalWrite(Kirmizi_Led, LOW);
+      Sifrenin_Kacinci_Elemani = 0;
+    }
+  }
+  /////////////////////////////////////////////////////////////////////////////
+  lm35_Gelen_Veri = analogRead(Isi_Olcer_lm35);
+  Voltaj_Degeri = (lm35_Gelen_Veri / 1023.0) * 5000;
+  Bulunan_Sicaklik = Voltaj_Degeri / 10.0;
+  if (Yazilan_Sicaklik != Bulunan_Sicaklik)
+  {
+    Yazilan_Sicaklik = Bulunan_Sicaklik;
+    lcd.clear();
+    lcd.home();
+    lcd.print("Sicaklik = ");
+    lcd.print(Bulunan_Sicaklik);
+    lcd.setCursor(0, 1);
+    if (Bulunan_Sicaklik > 30)
+    {
+      lcd.print("Sicaklik Yukseldi");
+    }
+    else if (Bulunan_Sicaklik < 20)
+    {
+      lcd.print("Sicaklik Dustu");
+    }
+  }
+  /////////////////////////////////////////////////////////////////////////////
+  Hareket_Sensoru_Kontrol = digitalRead(Hareket_Sensoru);
+  if (Hareket_Sensoru_Kontrol == 1)
+  {
+    digitalWrite(Lamba_Tetigi, HIGH);
+  }
+  else
+  {
+    digitalWrite(Lamba_Tetigi, LOW);
+  }
+  /////////////////////////////////////////////////////////////////////////////
+  Yangin_Sensoru_Kontrol = digitalRead(Yangin_Sensoru);
+  if (Yangin_Sensoru_Kontrol == 1)
+  {
+    digitalWrite(Buzzer, HIGH);
+  }
+  else
+  {
+    digitalWrite(Buzzer, LOW);
+  }
+  /////////////////////////////////////////////////////////////////////////////
+}
